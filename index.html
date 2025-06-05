@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ESP32 Smart Home Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mqtt/dist/mqtt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #eef2f3;
+      color: #333;
+    }
+    header {
+      background-color: #2c3e50;
+      padding: 20px;
+      color: white;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .container {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #2c3e50;
+    }
+    .card label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    input[type="number"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 150px;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      margin: 8px 5px 0 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .alert {
+      background: #e74c3c;
+      color: white;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    canvas {
+      margin-top: 15px;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header>ESP32 Smart Home Dashboard</header>
+  <div class="container">
+
+    <div class="card">
+      <h2>Gráficos em tempo real</h2>
+      <canvas id="tempChart"></canvas>
+      <canvas id="gasChart"></canvas>
+      <canvas id="lightChart"></canvas>
+    </div>
+
+    <div class="card">
+      <h2>Configurações de limiar</h2>
+      <label for="tempThreshold">Temperatura máxima (ventilador):</label>
+      <input type="number" id="tempThreshold" value="28" />
+
+      <label for="lightThreshold">Luminosidade mínima (luzes):</label>
+      <input type="number" id="lightThreshold" value="100" />
+
+      <button onclick="sendThresholds()">Atualizar Limiares</button>
+    </div>
+
+    <div class="card">
+      <h2>Controle de dispositivos</h2>
+      <button onclick="controlDevice('casa/command/led_branco', 'ON')">Ligar Luz</button>
+      <button onclick="controlDevice('casa/command/led_branco', 'OFF')">Desligar Luz</button><br />
+      <button onclick="controlDevice('casa/command/ventilador', 'ON')">Ligar Ventilador</button>
+      <button onclick="controlDevice('casa/command/ventilador', 'OFF')">Desligar Ventilador</button>
+    </div>
+
+    <div class="card" id="alerts"></div>
+
+  </div>
+
+  <script>
+    const client = mqtt.connect('wss://test.mosquitto.org:8081');
+
+    let tempData = [], gasData = [], lightData = [], labels = [];
+
+    const tempChart = new Chart(document.getElementById('tempChart'), {
+      type: 'line', 
+      data: { 
+        labels, 
+        datasets: [{ label: 'Temperatura (°C)', data: tempData, borderColor: 'red' }] 
+      }, 
+      options: {}
+    });
+
+    const gasChart = new Chart(document.getElementById('gasChart'), {
+      type: 'line', 
+      data: { 
+        labels, 
+        datasets: [{ label: 'Gás', data: gasData, borderColor: 'orange' }] 
+      }, 
+      options: {}
+    });
+
+    const lightChart = new Chart(document.getElementById('lightChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{ label: 'Luminosidade (LUX)', data: lightData, borderColor: 'blue' }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    const alertsDiv = document.getElementById('alerts');
+
+    client.on('connect', () => {
+      client.subscribe('casa/sensor/temperatura');
+      client.subscribe('casa/sensor/gas');
+      client.subscribe('casa/sensor/luz');
+    });
+
+    client.on('message', (topic, message) => {
+      const time = new Date().toLocaleTimeString();
+      if (labels.length > 20) {
+        labels.shift(); 
+        tempData.shift(); 
+        gasData.shift(); 
+        lightData.shift();
+      }
+      if (topic === 'casa/sensor/temperatura') {
+        let temp = parseFloat(message);
+        labels.push(time);
+        tempData.push(temp);
+        tempChart.update();
+        const tThresh = parseFloat(document.getElementById('tempThreshold').value);
+        if (temp > tThresh) showAlert(`Temperatura acima do limiar: ${temp} °C`);
+      }
+      if (topic === 'casa/sensor/gas') {
+        let gas = message.toString();
+        gasData.push(gas === 'ALERT' ? 1 : 0);
+        gasChart.update();
+        if (gas === 'ALERT') showAlert('🚨 Gás detectado!');
+      }
+      if (topic === 'casa/sensor/luz') {
+  let light = parseFloat(message);
+  labels.push(time);
+  lightData.push(light);
+  lightChart.update();
+  const lThresh = parseFloat(document.getElementById('lightThreshold').value);
+  if (light < lThresh) showAlert('Ambiente escuro detectado.');
+}
+    });
+
+    function controlDevice(topic, message) {
+      client.publish(topic, message);
+    }
+
+    function sendThresholds() {
+      const temp = document.getElementById('tempThreshold').value;
+      const light = document.getElementById('lightThreshold').value;
+
+      client.publish('casa/command/threshold/temp', temp.toString());
+      client.publish('casa/command/threshold/ldr', light.toString());
+
+      showAlert(`Limiares atualizados: Temperatura = ${temp} °C, Luminosidade = ${light}`);
+    }
+
+    function showAlert(msg) {
+      const div = document.createElement('div');
+      div.className = 'alert';
+      div.innerText = msg;
+      alertsDiv.appendChild(div);
+      setTimeout(() => div.remove(), 5000);
+    }
+  </script>
+</body>
+</html>
