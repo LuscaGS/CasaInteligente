@@ -1,89 +1,82 @@
-# Sistema de Casa Inteligente (Smart Home)
+# 🏠 Casa Inteligente — Automação Residencial com IoT
 
-Este projeto consiste no desenvolvimento de um sistema de automação residencial utilizando IoT (Internet das Coisas), com integração entre sensores, atuadores e aplicações de software.
-
-O objetivo é monitorar e controlar um ambiente residencial de forma automatizada e remota, utilizando comunicação em tempo real.
+Sistema de automação residencial com controle e monitoramento de dispositivos em tempo real via interface web. Projeto que integra hardware e software para criar um ambiente doméstico inteligente e conectado.
 
 ---
 
-## Funcionalidades
+## ✨ Funcionalidades
 
-* Monitoramento de temperatura e umidade (sensor DHT22)
-* Detecção de gás (sensor MQ-2)
-* Detecção de presença (sensor PIR)
-* Controle de iluminação (LEDs e relés)
-* Controle de dispositivos elétricos
-* Acionamento de alarme sonoro (buzzer)
-* Controle de motor de passo
-* Exibição de informações em display OLED
-* Comunicação via protocolo MQTT
-* Integração com servidor HTTP
-* Notificações automatizadas
+- 💡 Controle de iluminação remotamente
+- 🌡️ Monitoramento de temperatura e umidade em tempo real
+- 🔒 Controle de acesso e segurança
+- 📊 Dashboard web para visualização dos dados dos sensores
+- ⚡ Comunicação em tempo real entre dispositivos
 
 ---
 
-## Tecnologias Utilizadas
+## 🛠️ Tecnologias
 
-### Hardware
-
-* ESP32
-* Sensor DHT22
-* Sensor MQ-2
-* Sensor PIR
-* LDR (sensor de luminosidade)
-* Display OLED
-* Motor de passo com driver A4988
-* Relés, LEDs e buzzer
-
-### Software
-
-* C++ (Arduino/ESP32)
-* Protocolo MQTT
-* Servidor HTTP
-* Broker público MQTT (test.mosquitto.org)
-* Simulação no Wokwi
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![MQTT](https://img.shields.io/badge/MQTT-660066?style=flat&logo=eclipse-mosquitto&logoColor=white)
+![Arduino](https://img.shields.io/badge/Arduino-00979D?style=flat&logo=arduino&logoColor=white)
 
 ---
 
-## Arquitetura do Sistema
+## 🏗️ Arquitetura
 
-O sistema é dividido em três partes principais:
+```
+Sensores / Atuadores (Hardware)
+        ↕ (MQTT)
+   Broker MQTT
+        ↕
+  Interface Web (Dashboard)
+```
 
-* Dispositivo IoT (ESP32): responsável pela coleta de dados dos sensores e controle dos atuadores
-* Broker MQTT: responsável pela comunicação entre os dispositivos
-* Aplicações cliente: responsáveis pelo monitoramento e controle (web, mobile ou desktop)
-
----
-
-## Objetivo
-
-Este projeto tem como objetivo demonstrar na prática:
-
-* Integração entre hardware e software
-* Comunicação em tempo real com MQTT
-* Automação de ambientes residenciais
-* Desenvolvimento de sistemas distribuídos
-* Uso de sensores e atuadores em projetos reais
+Os dispositivos publicam dados via protocolo MQTT. O broker distribui as mensagens para a interface web, que exibe as informações em tempo real e permite enviar comandos de volta aos dispositivos.
 
 ---
 
-## Execução do Projeto
+## 🚀 Como rodar
 
-1. Configurar o ambiente no Wokwi ou em hardware real com ESP32
-2. Conectar os sensores e atuadores conforme o projeto
-3. Configurar o broker MQTT
-4. Executar o código no ESP32
-5. Acompanhar os dados via cliente MQTT ou interface web
+### Pré-requisitos
+- Broker MQTT instalado (ex: Mosquitto)
+- Dispositivo compatível (Arduino/ESP8266/ESP32)
+
+### Interface web
+```bash
+# Clone o repositório
+git clone https://github.com/LuscaGS/CasaInteligente.git
+
+# Abra o index.html no navegador
+open index.html
+```
+
+### Configuração do broker
+```bash
+# Instalar Mosquitto
+sudo apt install mosquitto mosquitto-clients
+
+# Iniciar o serviço
+sudo systemctl start mosquitto
+```
 
 ---
 
-## Autor
+## 📡 Hardware utilizado
 
-Lucas Garcia
-Desenvolvedor de Software Multiplataforma
+| Componente | Função |
+|------------|--------|
+| ESP8266 / ESP32 | Microcontrolador Wi-Fi principal |
+| DHT11 / DHT22 | Sensor de temperatura e umidade |
+| Relé | Controle de cargas elétricas |
+| LED | Indicador de status |
 
 ---
 
-## Observações
+## 👨‍💻 Autor
 
-Este projeto foi desenvolvido como parte de atividades acadêmicas, com foco em integração IoT e sistemas inteligentes.
+**Lucas Garcia Lima**
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/lucas-garcia-lima/)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/LuscaGS)
